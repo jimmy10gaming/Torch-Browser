@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Torch Music</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background: #fafaff;
+    }
+    #search-form {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    #song-input {
+      width: 300px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px 0 0 6px;
+      border: 1px solid #aaa;
+      outline: none;
+    }
+    #search-btn {
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 0 6px 6px 0;
+      border: 1px solid #aaa;
+      background: #3b7ddd;
+      color: #fff;
+      cursor: pointer;
+    }
+    #results {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .result-item {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .result-item img {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #eee;
+    }
+    .song-info {
+      flex: 1;
+    }
+    .song-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .song-artist {
+      color: #555;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .preview-audio {
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Music Finder</h1>
+  <form id="search-form">
+    <input id="song-input" type="text" placeholder="Enter song name..." autocomplete="off">
+    <button id="search-btn" type="submit">Search</button>
+  </form>
+  <div id="results"></div>
+  <script>
+    const form = document.getElementById('search-form');
+    const input = document.getElementById('song-input');
+    const results = document.getElementById('results');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = input.value.trim();
+      results.innerHTML = '';
+      if (!query) return;
+
+      results.innerHTML = '<div>Searching...</div>';
+      // Use iTunes Search API
+      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=5`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        results.innerHTML = '';
+        if (data.results.length === 0) {
+          results.innerHTML = '<div>No songs found.</div>';
+          return;
+        }
+        data.results.forEach(song => {
+          const item = document.createElement('div');
+          item.className = 'result-item';
+          item.innerHTML = `
+            <img src="${song.artworkUrl100}" alt="Artwork">
+            <div class="song-info">
+              <div class="song-title">${song.trackName}</div>
+              <div class="song-artist">${song.artistName}</div>
+              <a href="${song.trackViewUrl}" target="_blank">View on iTunes</a>
+              ${song.previewUrl ? `
+                <div class="preview-audio">
+                  <audio controls src="${song.previewUrl}"></audio>
+                </div>
+              ` : ''}
+            </div>
+          `;
+          results.appendChild(item);
+        });
+      } catch (err) {
+        results.innerHTML = '<div>Error fetching songs.</div>';
+      }
+    });
+  </script>
+</body>
+</html>
